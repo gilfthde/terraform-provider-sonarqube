@@ -40,6 +40,31 @@ func testAccSonarqubeGroupMemberBasicConfig(rnd string, groupName string, loginN
 		`, rnd, groupName, loginName)
 }
 
+func testAccSonarqubeGroupMemberErrorDuplicateConfig(rnd string, groupName string, loginName string) string {
+	return fmt.Sprintf(`
+		resource "sonarqube_user" "%[1]s_user" {
+			login_name = "%[3]s"
+			name       = "Test User"
+			email      = "terraform-test@sonarqube.com"
+			password   = "secret-sauce!"
+		}
+
+		resource "sonarqube_group" "%[1]s_group" {
+			name        = "%[2]s"
+		}
+
+		resource "sonarqube_group_member" "%[1]s" {
+			name       = sonarqube_group.%[1]s_group.name
+			login_name = sonarqube_user.%[1]s_user.login_name
+		}
+
+		resource "sonarqube_group_member" "%[1]s_2" { // duplicate
+			name       = sonarqube_group.%[1]s_group.name
+			login_name = sonarqube_user.%[1]s_user.login_name
+		}
+		`, rnd, groupName, loginName)
+}
+
 func TestAccSonarqubeGroupMemberBasic(t *testing.T) {
 	rnd := generateRandomResourceName()
 	name := "sonarqube_group_member." + rnd
@@ -55,44 +80,8 @@ func TestAccSonarqubeGroupMemberBasic(t *testing.T) {
 					resource.TestCheckResourceAttr(name, "login_name", "testAccSonarqubeUser"),
 				),
 			},
-		},
-	})
-}
-
-func testAccSonarqubeGroupMemberErrorDuplicateConfig(rnd string, groupName string, loginName string) string {
-	return fmt.Sprintf(`
-		resource "sonarqube_user" "%[1]s_user" {
-			login_name = "%[3]s"
-			name       = "Test User"
-			email      = "terraform-test@sonarqube.com"
-			password   = "secret-sauce!"
-		}
-
-		resource "sonarqube_group" "%[1]s_group" {
-			name        = "%[2]s"
-		}
-
-		resource "sonarqube_group_member" "%[1]s_1" {
-			name       = sonarqube_group.%[1]s_group.name
-			login_name = sonarqube_user.%[1]s_user.login_name
-		}
-
-		resource "sonarqube_group_member" "%[1]s_2" { // duplicate
-			name       = sonarqube_group.%[1]s_group.name
-			login_name = sonarqube_user.%[1]s_user.login_name
-		}
-		`, rnd, groupName, loginName)
-}
-
-func TestAccSonarqubeGroupMemberErrorDuplicate(t *testing.T) {
-	rnd := generateRandomResourceName()
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
-		Steps: []resource.TestStep{
 			{
-				Config:      testAccSonarqubeGroupMemberErrorDuplicateConfig(rnd, "testAccSonarqubeGroup", "testAccSonarqubeUser"),
+				Config:      testAccSonarqubeGroupMemberBasicConfig(rnd, "testAccSonarqubeGroup", "testAccSonarqubeUser"),
 				ExpectError: regexp.MustCompile("Group membership already exists: testAccSonarqubeGroup[testAccSonarqubeUser]"),
 			},
 		},
