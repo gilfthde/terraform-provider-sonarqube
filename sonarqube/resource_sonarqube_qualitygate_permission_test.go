@@ -32,9 +32,9 @@ func testAccSonarqubeQualitygatePermissionUserConfig(rnd string, gateName string
 		}
 
 		resource "sonarqube_qualitygate_permission" "%[1]s" {
-			name    = sonarqube_qualitygate.%[1]s_gate.name
-			type    = "user"
-			subject = sonarqube_user.%[1]s_user.login_name
+			gate_name = sonarqube_qualitygate.%[1]s_gate.name
+			type      = "user"
+			subject   = sonarqube_user.%[1]s_user.login_name
 		}
 		`, rnd, gateName, loginName)
 }
@@ -50,9 +50,9 @@ func testAccSonarqubeQualitygatePermissionGroupConfig(rnd string, gateName strin
 		}
 
 		resource "sonarqube_qualitygate_permission" "%[1]s" {
-			name    = sonarqube_qualitygate.%[1]s_gate.name
-			type    = "group"
-			subject = sonarqube_group.%[1]s_group.name
+			gate_name = sonarqube_qualitygate.%[1]s_gate.name
+			type      = "group"
+			subject   = sonarqube_group.%[1]s_group.name
 		}
 		`, rnd, gateName, groupName)
 }
@@ -68,7 +68,7 @@ func TestAccSonarqubeQualitygatePermissionBasic(t *testing.T) {
 			{
 				Config: testAccSonarqubeQualitygatePermissionUserConfig(rnd, "testAccSonarqubeQualtiyGate", "testAccSonarqubeUser"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(name, "name", "testAccSonarqubeQualtiyGate"),
+					resource.TestCheckResourceAttr(name, "gate_name", "testAccSonarqubeQualtiyGate"),
 					resource.TestCheckResourceAttr(name, "type", "user"),
 					resource.TestCheckResourceAttr(name, "subject", "testAccSonarqubeUser"),
 				),
@@ -76,7 +76,7 @@ func TestAccSonarqubeQualitygatePermissionBasic(t *testing.T) {
 			{
 				Config: testAccSonarqubeQualitygatePermissionGroupConfig(rnd, "testAccSonarqubeQualtiyGate", "testAccSonarqubeGroup"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(name, "name", "testAccSonarqubeQualtiyGate"),
+					resource.TestCheckResourceAttr(name, "gate_name", "testAccSonarqubeQualtiyGate"),
 					resource.TestCheckResourceAttr(name, "type", "group"),
 					resource.TestCheckResourceAttr(name, "subject", "testAccSonarqubeGroup"),
 				),
