@@ -59,7 +59,7 @@ func testAccSonarqubeQualitygatePermissionGroupConfig(rnd string, gateName strin
 
 func TestAccSonarqubeQualitygatePermissionBasic(t *testing.T) {
 	rnd := generateRandomResourceName()
-	name := "sonarqube_group_qualitygate_permission." + rnd
+	name := "sonarqube_qualitygate_permission." + rnd
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
