@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -66,6 +67,10 @@ func resourceSonarqubeQualityGatePermission() *schema.Resource {
 }
 
 func resourceSonarqubeQualityGatePermissionCreate(d *schema.ResourceData, m interface{}) error {
+	if err := checkGatePermissionFeatureSupport(m.(*ProviderConfiguration)); err != nil {
+		return err
+	}
+
 	sonarQubeURL := m.(*ProviderConfiguration).sonarQubeURL
 
 	switch t := d.Get("type").(string); t {
@@ -104,6 +109,10 @@ func resourceSonarqubeQualityGatePermissionCreate(d *schema.ResourceData, m inte
 }
 
 func resourceSonarqubeQualityGatePermissionRead(d *schema.ResourceData, m interface{}) error {
+	if err := checkGatePermissionFeatureSupport(m.(*ProviderConfiguration)); err != nil {
+		return err
+	}
+
 	sonarQubeURL := m.(*ProviderConfiguration).sonarQubeURL
 
 	switch t := d.Get("type").(string); t {
@@ -183,6 +192,10 @@ func resourceSonarqubeQualityGatePermissionRead(d *schema.ResourceData, m interf
 }
 
 func resourceSonarqubeQualityGatePermissionDelete(d *schema.ResourceData, m interface{}) error {
+	if err := checkGatePermissionFeatureSupport(m.(*ProviderConfiguration)); err != nil {
+		return err
+	}
+
 	sonarQubeURL := m.(*ProviderConfiguration).sonarQubeURL
 
 	switch t := d.Get("type").(string); t {
@@ -219,6 +232,10 @@ func resourceSonarqubeQualityGatePermissionDelete(d *schema.ResourceData, m inte
 }
 
 func resourceSonarqubeQualityGatePermissionImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	if err := checkGatePermissionFeatureSupport(m.(*ProviderConfiguration)); err != nil {
+		return nil, err
+	}
+
 	rgx := regexp.MustCompile(`(.*?)\[(.*?)/(.*?)\]`)
 	rs := rgx.FindStringSubmatch(d.Id())
 	gateName := rs[1]
@@ -237,4 +254,12 @@ func resourceSonarqubeQualityGatePermissionImport(d *schema.ResourceData, m inte
 
 func createGatePermissionId(gateName string, subjectType string, subject string) string {
 	return gateName + "[" + subjectType + "/" + subject + "]"
+}
+
+func checkGatePermissionFeatureSupport(conf *ProviderConfiguration) error {
+	minimumVersion, _ := version.NewVersion("9.2")
+	if conf.sonarQubeVersion.LessThan(minimumVersion) {
+		return fmt.Errorf("Minimum required SonarQube version for quality gate permissions is %s", minimumVersion)
+	}
+	return nil
 }

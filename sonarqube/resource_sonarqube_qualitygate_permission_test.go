@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
@@ -16,6 +17,15 @@ func init() {
 
 func testSweepSonarqubeQualitygatePermissionSweeper(r string) error {
 	return nil
+}
+
+func testAccPreCheckQualityGatePermissionFeature(t *testing.T) {
+	sonarQubeVersion := testAccProvider.Meta().(*ProviderConfiguration).sonarQubeVersion
+
+	minimumVersion, _ := version.NewVersion("9.2")
+	if sonarQubeVersion.LessThan(minimumVersion) {
+		t.Skipf("Skipping test of unsupported feature")
+	}
 }
 
 func testAccSonarqubeQualitygatePermissionUserConfig(rnd string, gateName string, loginName string) string {
@@ -62,7 +72,7 @@ func TestAccSonarqubeQualitygatePermissionBasic(t *testing.T) {
 	name := "sonarqube_qualitygate_permission." + rnd
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
+		PreCheck:  func() { testAccPreCheck(t); testAccPreCheckQualityGatePermissionFeature(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
