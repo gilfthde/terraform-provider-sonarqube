@@ -44,7 +44,7 @@ func resourceSonarqubeQualityGatePermission() *schema.Resource {
 
 		// Define the fields of this schema.
 		Schema: map[string]*schema.Schema{
-			"gate_name": {
+			"gatename": {
 				Type:        schema.TypeString,
 				Description: "Name of the quality gate",
 				Required:    true,
@@ -77,13 +77,13 @@ func resourceSonarqubeQualityGatePermissionCreate(d *schema.ResourceData, m inte
 	case "user":
 		sonarQubeURL.Path = strings.TrimSuffix(sonarQubeURL.Path, "/") + "/api/qualitygates/add_user"
 		sonarQubeURL.RawQuery = url.Values{
-			"gateName": []string{d.Get("gate_name").(string)},
+			"gateName": []string{d.Get("gatename").(string)},
 			"login":    []string{d.Get("subject").(string)},
 		}.Encode()
 	case "group":
 		sonarQubeURL.Path = strings.TrimSuffix(sonarQubeURL.Path, "/") + "/api/qualitygates/add_group"
 		sonarQubeURL.RawQuery = url.Values{
-			"gateName":  []string{d.Get("gate_name").(string)},
+			"gateName":  []string{d.Get("gatename").(string)},
 			"groupName": []string{d.Get("subject").(string)},
 		}.Encode()
 	default:
@@ -99,11 +99,11 @@ func resourceSonarqubeQualityGatePermissionCreate(d *schema.ResourceData, m inte
 	)
 	if err != nil {
 		return fmt.Errorf("resourceQualityGatePermissionCreate: error creating Sonarqube %s '%s' permission on quality gate '%s': %w",
-			d.Get("type").(string), d.Get("subject").(string), d.Get("gate_name").(string), err)
+			d.Get("type").(string), d.Get("subject").(string), d.Get("gatename").(string), err)
 	}
 	defer resp.Body.Close()
 
-	d.SetId(createGatePermissionId(d.Get("gate_name").(string), d.Get("type").(string), d.Get("subject").(string)))
+	d.SetId(createGatePermissionId(d.Get("gatename").(string), d.Get("type").(string), d.Get("subject").(string)))
 
 	return resourceSonarqubeQualityGatePermissionRead(d, m)
 }
@@ -124,7 +124,7 @@ func resourceSonarqubeQualityGatePermissionRead(d *schema.ResourceData, m interf
 		return fmt.Errorf("Invalid value for 'type' parameter: '%s'", d.Get("type").(string))
 	}
 	sonarQubeURL.RawQuery = url.Values{
-		"gateName": []string{d.Get("gate_name").(string)},
+		"gateName": []string{d.Get("gatename").(string)},
 		"q":        []string{d.Get("subject").(string)},
 	}.Encode()
 
@@ -136,7 +136,7 @@ func resourceSonarqubeQualityGatePermissionRead(d *schema.ResourceData, m interf
 		"resourceSonarqubeQualityGatePermissionRead",
 	)
 	if err != nil {
-		return fmt.Errorf("error reading Sonarqube permissions on quality gate '%s': %w", d.Get("gate_name").(string), err)
+		return fmt.Errorf("error reading Sonarqube permissions on quality gate '%s': %w", d.Get("gatename").(string), err)
 	}
 	defer resp.Body.Close()
 
@@ -149,13 +149,13 @@ func resourceSonarqubeQualityGatePermissionRead(d *schema.ResourceData, m interf
 		err = json.NewDecoder(resp.Body).Decode(&readResponse)
 		if err != nil {
 			return fmt.Errorf("resourceQualityGatePermissionCreate: Failed to read user '%s' permission on quality gate '%s': %+v",
-				d.Get("subject").(string), d.Get("gate_name").(string), err)
+				d.Get("subject").(string), d.Get("gatename").(string), err)
 		}
 		// Loop over all returned members to see if the member we need exists.
 		for _, value := range readResponse.Users {
 			if d.Get("subject").(string) == value.LoginName {
 				// If it does, set the values of that group membership
-				d.SetId(createGatePermissionId(d.Get("gate_name").(string), d.Get("type").(string), d.Get("subject").(string)))
+				d.SetId(createGatePermissionId(d.Get("gatename").(string), d.Get("type").(string), d.Get("subject").(string)))
 				d.Set("subject", value.LoginName)
 				readSuccess = true
 				break
@@ -167,13 +167,13 @@ func resourceSonarqubeQualityGatePermissionRead(d *schema.ResourceData, m interf
 		err = json.NewDecoder(resp.Body).Decode(&readResponse)
 		if err != nil {
 			return fmt.Errorf("resourceSonarqubeQualityGatePermissionRead: Failed to read group '%s' permission on quality gate '%s': %+v",
-				d.Get("subject").(string), d.Get("gate_name").(string), err)
+				d.Get("subject").(string), d.Get("gatename").(string), err)
 		}
 		// Loop over all returned members to see if the member we need exists.
 		for _, value := range readResponse.Groups {
 			if d.Get("subject").(string) == value.Name {
 				// If it does, set the values of that group membership
-				d.SetId(createGatePermissionId(d.Get("gate_name").(string), d.Get("type").(string), d.Get("subject").(string)))
+				d.SetId(createGatePermissionId(d.Get("gatename").(string), d.Get("type").(string), d.Get("subject").(string)))
 				d.Set("subject", value.Name)
 				readSuccess = true
 				break
@@ -185,7 +185,7 @@ func resourceSonarqubeQualityGatePermissionRead(d *schema.ResourceData, m interf
 
 	if !readSuccess {
 		return fmt.Errorf("resourceSonarqubeQualityGatePermissionRead: Failed to read %s '%s' permission on quality gate '%s': not found",
-			d.Get("type").(string), d.Get("subject").(string), d.Get("gate_name").(string))
+			d.Get("type").(string), d.Get("subject").(string), d.Get("gatename").(string))
 	}
 
 	return nil
@@ -202,13 +202,13 @@ func resourceSonarqubeQualityGatePermissionDelete(d *schema.ResourceData, m inte
 	case "user":
 		sonarQubeURL.Path = strings.TrimSuffix(sonarQubeURL.Path, "/") + "/api/qualitygates/remove_user"
 		sonarQubeURL.RawQuery = url.Values{
-			"gateName": []string{d.Get("gate_name").(string)},
+			"gateName": []string{d.Get("gatename").(string)},
 			"login":    []string{d.Get("subject").(string)},
 		}.Encode()
 	case "group":
 		sonarQubeURL.Path = strings.TrimSuffix(sonarQubeURL.Path, "/") + "/api/qualitygates/remove_group"
 		sonarQubeURL.RawQuery = url.Values{
-			"gateName":  []string{d.Get("gate_name").(string)},
+			"gateName":  []string{d.Get("gatename").(string)},
 			"groupName": []string{d.Get("subject").(string)},
 		}.Encode()
 	default:
@@ -224,7 +224,7 @@ func resourceSonarqubeQualityGatePermissionDelete(d *schema.ResourceData, m inte
 	)
 	if err != nil {
 		return fmt.Errorf("resourceQualityGatePermissionDelete: error removing Sonarqube %s '%s' permission on quality gate '%s': %w",
-			d.Get("type").(string), d.Get("subject").(string), d.Get("gate_name").(string), err)
+			d.Get("type").(string), d.Get("subject").(string), d.Get("gatename").(string), err)
 	}
 	defer resp.Body.Close()
 
@@ -242,7 +242,7 @@ func resourceSonarqubeQualityGatePermissionImport(d *schema.ResourceData, m inte
 	subjectType := rs[2]
 	subject := rs[3]
 
-	d.Set("gate_name", gateName)
+	d.Set("gatename", gateName)
 	d.Set("type", subjectType)
 	d.Set("subject", subject)
 
